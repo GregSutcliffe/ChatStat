@@ -1,8 +1,20 @@
 Package: ChatStat
 Title: An R package To Gather Stats From Chat Platforms
 Version: 0.0.0.9000
-Authors@R: 
-    person("Greg", "Sutcliffe", , "chatstat@emeraldreverie.org", role = c("aut", "cre"))
+Authors@R: c(
+        person(
+            "Greg",
+            "Sutcliffe",
+            email = "chatstat@emeraldreverie.org",
+            role = c("aut", "cre")
+        ),
+        person(
+            "Elias",
+            "Projahn",
+            email = "elias@johrpan.de",
+            role = "aut"
+        )
+    )
 Description:
     This package uses the available APIs for various chat platforms to gather
     data on specific things and represent it in a tidy format. Right now only
@@ -11,7 +23,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
-Imports: 
+Imports:
     dplyr,
     glue,
     httr,
