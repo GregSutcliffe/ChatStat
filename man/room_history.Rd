@@ -4,7 +4,7 @@
 \alias{room_history}
 \title{Get the list of room events for a given room ID.}
 \usage{
-room_history(room_id, since = NULL)
+room_history(room_id, since)
 }
 \arguments{
 \item{room_id}{The room to get data for.}

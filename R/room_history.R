@@ -3,59 +3,73 @@
 #' @param room_id The room to get data for.
 #' @param since  Stop paginating when reaching this time.
 #'
-#' @return A list of events.
+#' @return A tibble containing event information.
 #'
 #' @export
-room_history <- function(room_id, since = NULL) {
+room_history <- function(room_id, since) {
   # Documentation:
   # https://spec.matrix.org/v1.1/client-server-api/#get_matrixclientv3roomsroomidmessages
 
+  # We expect since to be a POSIX datetime, but could be a string.
+  since <- lubridate::as_datetime(since)
+
   # The room_id will have a "!" at the start which needs to be encoded as %21.
-  room_id <- sub("^\\!", "%21", room_id)
+  room_id_url <- sub("^\\!", "%21", room_id)
 
-  # Get the initial sync (i.e *newest* messages)
-  # TODO check that actually worked
-  initial <- initial_sync()
+  rlog::log_info(
+    glue::glue("Fetching events for room {room_id} since {since}.")
+  )
 
-  # Build a pagination loop
-  continue <- TRUE
-  result <- list()
-  from <- initial$next_batch
+  # TODO: Add better configuration.
   token <- Sys.getenv("token")
 
-  while (continue) {
+  # Perform an initial sync and get events for the room.
+  sync <- initial_sync()
+  timeline <- sync$rooms$join[[room_id]]$timeline
+  from <- timeline$prev_batch
+
+  events <- process_events(timeline$events)
+
+  rlog::log_info(glue::glue("Initial sync yielded {nrow(events)} events."))
+
+  while (TRUE) {
+    oldest_time <- events |>
+      dplyr::slice_min(time) |>
+      dplyr::pull(time)
+
+    if (oldest_time < since) {
+      rlog::log_info("Specified time has been reached. Stopping.")
+      break
+    }
+
+    rlog::log_info(glue::glue("Oldest message is from {oldest_time}."))
+
     response <- httr::GET(
-      url = api_url(glue::glue("/_matrix/client/r0/rooms/{roomid}/messages")),
+      url = api_url(
+        glue::glue("/_matrix/client/r0/rooms/{room_id_url}/messages")
+      ),
       query = list(
         access_token = token,
         dir = "b",
-        limit = 100,
-        from = from
+        from = from,
+        limit = 100
       )
     )
 
-    dat <- httr::content(response)
+    messages <- httr::content(response)
+    new_event_count <- length(messages$chunk)
 
-    result <- c(result, dat$chunk)
-    from <- dat$end
+    if (new_event_count <= 0) {
+      rlog::log_info("No more events. Stopping early.")
+      break
+    }
 
-    # We expect since to be a POSIX datetime, but could be a string.
-    since <- lubridate::as_datetime(since)
+    rlog::log_info(glue::glue("Received {new_event_count} more events."))
+    new_events <- process_events(messages$chunk)
 
-    # Find the earliest event in the results so far, and see if we've gone
-    # back far enough yet.
-    # NOTE "age" is the time since the event, so *max* is needed to get the
-    # earliest event, not min.
-    max_age <- max(sapply(result, function(event) {
-      event$age
-    }))
-
-    min_time <- lubridate::as_datetime(Sys.time() - max_age / 1000)
-
-    print(min_time)
-    continue <- (since < min_time)
+    events <- events |> tibble::add_row(new_events, .before = 0)
+    from <- messages$end
   }
 
-  # TODO actually filter these to the events after `since`
-  result
+  events |> dplyr::filter(time >= since)
 }
