@@ -1,6 +1,7 @@
 #' Get the list of room events for a given roomID
 #'
-#' @param since stop paginating when reaching this time
+#' @param roomid the room to get data for
+#' @param since  stop paginating when reaching this time
 #'
 #' @return A list of events
 #' @export

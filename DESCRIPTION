@@ -13,4 +13,5 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Imports: 
     glue,
-    httr
+    httr,
+    lubridate
