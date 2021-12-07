@@ -1,13 +1,13 @@
 api_url <- function(url, host = NULL, port = NULL) {
   if (is.null(host)) {
-    host = Sys.getenv("host")
+    host <- Sys.getenv("host")
   }
 
-  if (!is.null(port)) {
-    port = glue::glue(':{port}')
+  port <- if (!is.null(port)) {
+    glue::glue(":{port}")
   } else {
-    port = ""
+    ""
   }
 
-  glue::glue('https://{host}{port}{url}')
+  glue::glue("https://{host}{port}{url}")
 }

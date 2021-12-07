@@ -2,18 +2,18 @@
 % Please edit documentation in R/room_history.R
 \name{room_history}
 \alias{room_history}
-\title{Get the list of room events for a given roomID}
+\title{Get the list of room events for a given room ID.}
 \usage{
-room_history(roomid, since = NULL)
+room_history(room_id, since = NULL)
 }
 \arguments{
-\item{roomid}{the room to get data for}
+\item{room_id}{The room to get data for.}
 
-\item{since}{stop paginating when reaching this time}
+\item{since}{Stop paginating when reaching this time.}
 }
 \value{
-A list of events
+A list of events.
 }
 \description{
-Get the list of room events for a given roomID
+Get the list of room events for a given room ID.
 }
