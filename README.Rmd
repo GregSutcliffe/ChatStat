@@ -59,10 +59,17 @@ Sys.setenv('token' = 'syt_foobarbaz',
 You can then get a JSON list of events by providing a roomID that you access to:
 ``` r
 library(ChatStat)
-df <- room_history('!layMvdZSboJeKiyTAL:matrix.org', # rmeta:matrix.org
+event_list <- room_history('!layMvdZSboJeKiyTAL:matrix.org', # rmeta:matrix.org
                    since = '2021-12-01 00:00:00')
-length(df)
+length(event_list)
 ```
 
 See https://spec.matrix.org/v1.1/client-server-api/ for more details of the
 Matrix Client-Server API Spec
+
+Once you have your JSON list, you can parse it with a second call:
+
+``` r
+df <- parse_room_events(event_list)
+count(df,event_type)
+```
