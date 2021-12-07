@@ -19,7 +19,7 @@ sync <- function(since = NULL) {
     )
   )
   # TODO check error code properly
-  print(httr::status_code(resp))
+  # print(httr::status_code(resp))
 
   # Return the list
   httr::content(resp)
