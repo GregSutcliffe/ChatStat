@@ -65,3 +65,26 @@ Once you have your JSON list, you can parse it with a second call:
 df <- parse_room_events(event_list)
 count(df,event_type)
 ```
+
+From there, use the table as normal, eg:
+
+``` r
+r |>
+  # messages & reactions only
+  filter( !is.na(body) | event_type == 'm.reaction') |>
+  
+  # detect Libera IRC users and bucket by day
+  mutate(irc = stringr::str_detect(userid,'libera.chat'),
+         day = as_datetime(cut(date,'day'))) %>%
+  
+  # sum over day and IRC/Matrix
+  count(day,irc) %>%
+  
+  # Plot
+  ggplot(aes(day,n,fill=irc)) + geom_col(position = 'dodge2') + geom_smooth() +
+  labs(title='Messages & Reactions per day, Ansible Social room',
+       x = 'Date', y = 'Count') +
+  theme_minimal() +
+  guides(fill='none') +
+  facet_wrap(~irc,labeller = label_both)
+```
