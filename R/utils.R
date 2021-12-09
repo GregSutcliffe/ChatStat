@@ -17,7 +17,9 @@ process_events <- function(events) {
     tidyr::hoist(event,
       time = "origin_server_ts",
       type = "type",
-      sender = "sender"
+      sender = "sender",
+      message_type = c("content", "msgtype"),
+      body = c("content", "body")
     ) |>
     dplyr::select(!event) |>
     dplyr::mutate(time = lubridate::as_datetime(time / 1000)) |>
