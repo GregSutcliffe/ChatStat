@@ -24,7 +24,7 @@ room_history <- function(room_id, since) {
 
   events <- process_events(timeline$events)
 
-  rlog::log_info(glue::glue("Initial sync yielded {nrow(events)} events."))
+  rlog::log_debug(glue::glue("Initial sync yielded {nrow(events)} events."))
 
   while (TRUE) {
     oldest_time <- events |>
@@ -36,7 +36,7 @@ room_history <- function(room_id, since) {
       break
     }
 
-    rlog::log_info(glue::glue("Oldest message is from {oldest_time}."))
+    rlog::log_debug(glue::glue("Oldest message is from {oldest_time}."))
 
     messages <- get_messages(room_id, from)
     new_event_count <- length(messages$chunk)
@@ -46,7 +46,7 @@ room_history <- function(room_id, since) {
       break
     }
 
-    rlog::log_info(glue::glue("Received {new_event_count} more events."))
+    rlog::log_debug(glue::glue("Received {new_event_count} more events."))
 
     new_events <- process_events(messages$chunk)
     events <- events |> tibble::add_row(new_events, .before = 0)
