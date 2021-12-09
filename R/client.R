@@ -5,7 +5,7 @@
 #' @return A list object from the Matrix API.
 #'
 #' @export
-initial_sync <- function(since = NULL) {
+sync <- function(since = NULL) {
   # Documentation:
   # https://spec.matrix.org/v1.1/client-server-api/#get_matrixclientv3sync
 

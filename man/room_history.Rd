@@ -2,7 +2,7 @@
 % Please edit documentation in R/room_history.R
 \name{room_history}
 \alias{room_history}
-\title{Get the list of room events for a given room ID.}
+\title{Get the room events for a given room ID.}
 \usage{
 room_history(room_id, since)
 }
@@ -12,8 +12,8 @@ room_history(room_id, since)
 \item{since}{Stop paginating when reaching this time.}
 }
 \value{
-A list of events.
+A tibble containing event information.
 }
 \description{
-Get the list of room events for a given room ID.
+Get the room events for a given room ID.
 }

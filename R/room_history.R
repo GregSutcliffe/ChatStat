@@ -18,8 +18,8 @@ room_history <- function(room_id, since) {
   token <- Sys.getenv("token")
 
   # Perform an initial sync and get events for the room.
-  sync <- initial_sync()
-  timeline <- sync$rooms$join[[room_id]]$timeline
+  initial_sync <- sync()
+  timeline <- initial_sync$rooms$join[[room_id]]$timeline
   from <- timeline$prev_batch
 
   events <- process_events(timeline$events)
