@@ -22,6 +22,7 @@ process_events <- function(events) {
       message_type = c("content", "msgtype"),
       body         = c("content", "body")
     ) |>
+    tibble::add_column(raw_event = events) |>
     dplyr::select(!event) |>
     dplyr::mutate(time = lubridate::as_datetime(time / 1000)) |>
     dplyr::arrange(time)
