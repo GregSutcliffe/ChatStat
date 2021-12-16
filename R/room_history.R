@@ -22,7 +22,7 @@ room_history <- function(room_id, since, initial_sync) {
 
   while (TRUE) {
     oldest_time <- events |>
-      dplyr::slice_min(time) |>
+      dplyr::slice(1) |>
       dplyr::pull(time)
 
     if (oldest_time < since) {
