@@ -15,6 +15,7 @@ api_url <- function(url, host = NULL, port = NULL) {
 process_events <- function(events) {
   tibble::tibble(event = events) |>
     tidyr::hoist(event,
+      id           = "event_id",
       time         = "origin_server_ts",
       type         = "type",
       sender       = "sender",

@@ -28,6 +28,7 @@ Imports:
     glue,
     httr,
     lubridate,
+    purrr,
     rlog,
     tibble,
     tidyr

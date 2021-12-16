@@ -1,30 +1,24 @@
 #' Get the room events for a given room ID.
 #'
-#' @param room_id The room to get data for.
-#' @param since   Stop paginating when reaching this time.
+#' @param room_id      The room to get data for.
+#' @param since        Stop paginating when reaching this time.
+#' @param initial_sync Result of a prior call to [sync()].
 #'
 #' @return A tibble containing event information.
 #'
-#' @export
-room_history <- function(room_id, since) {
-  # We expect since to be a POSIX datetime, but could be a string.
-  since <- lubridate::as_datetime(since)
+#' @noRd
+room_history <- function(room_id, since, initial_sync) {
+  # TODO: Add better configuration.
+  token    <- Sys.getenv("token")
+  timeline <- initial_sync$rooms$join[[room_id]]$timeline
+  from     <- timeline$prev_batch
+
+  events   <- process_events(timeline$events)
+  rlog::log_debug(glue::glue("Initial sync yielded {nrow(events)} events."))
 
   rlog::log_info(
     glue::glue("Fetching events for room {room_id} since {since}.")
   )
-
-  # TODO: Add better configuration.
-  token <- Sys.getenv("token")
-
-  # Perform an initial sync and get events for the room.
-  initial_sync <- sync()
-  timeline     <- initial_sync$rooms$join[[room_id]]$timeline
-  from         <- timeline$prev_batch
-
-  events <- process_events(timeline$events)
-
-  rlog::log_debug(glue::glue("Initial sync yielded {nrow(events)} events."))
 
   while (TRUE) {
     oldest_time <- events |>
@@ -54,4 +48,34 @@ room_history <- function(room_id, since) {
   }
 
   events |> dplyr::filter(time >= since)
+}
+
+#' Get the room events for a given room ID.
+#'
+#' @param room_ids Vector of room IDs to iterate over.
+#' @param since    Stop paginating when reaching this time.
+#' @param sync     (Optional) Result of a prior call to [sync()] to save
+#'                 duplication.
+#'
+#' @return A tibble containing event information.
+#'
+#' @export
+get_rooms <- function(room_ids, since, sync = NULL) {
+  # We expect since to be a POSIX datetime, but could be a string.
+  since <- lubridate::as_datetime(since)
+
+  rlog::log_debug(glue::glue("Getting history for {length(room_ids)} rooms."))
+
+  # Perform an initial sync and get events for the room.
+  initial_sync <- if (is.null(sync)) {
+    rlog::log_debug("Initial sync not provided - running sync() now.")
+    sync()
+  } else {
+    rlog::log_debug("Initial sync provided - not running sync().")
+    sync
+  }
+
+  tidyr::tibble(room = room_ids) |>
+    dplyr::group_by(room) |>
+    dplyr::mutate(events = purrr::map(room, room_history, since, initial_sync))
 }
