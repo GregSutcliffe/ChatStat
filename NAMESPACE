@@ -3,3 +3,4 @@
 export(get_messages)
 export(get_rooms)
 export(sync)
+export(update_room)

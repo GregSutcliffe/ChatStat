@@ -15,7 +15,7 @@ get_rooms(room_ids, since, sync = NULL)
 duplication.}
 }
 \value{
-A tibble containing event information.
+A tibble containing the rooms.
 }
 \description{
 Get the room events for a given room ID.

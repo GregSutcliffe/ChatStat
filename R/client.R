@@ -33,32 +33,46 @@ sync <- function(since = NULL) {
 #'
 #' @param room_id The room whose messages will be received.
 #' @param from The start token within the history.
+#' @param dir Direction to receive messages in. "b" for backwards in time, "f"
+#'   for forwards in time.
+#' @param to The end token to stop receiving messages at.
 #'
 #' @return A list object from the Matrix API.
 #'
 #' @export
-get_messages <- function(room_id, from) {
+get_messages <- function(room_id, from, dir = "b", to = NULL) {
   # Documentation:
   # https://spec.matrix.org/v1.1/client-server-api/#get_matrixclientv3roomsroomidmessages
-
-  # The room_id will have a "!" at the start which needs to be encoded as %21.
-  room_id_encoded <- sub("^\\!", "%21", room_id)
 
   # TODO: Better configuration.
   token <- Sys.getenv("token")
 
   response <- httr::GET(
     url = api_url(
-      glue::glue("/_matrix/client/r0/rooms/{room_id_encoded}/messages")
+      glue::glue("/_matrix/client/r0/rooms/{encode_room_id(room_id)}/messages")
     ),
     query = list(
       access_token = token,
-      dir          = "b",
+      dir          = dir,
       from         = from,
-      limit        = 100
+      limit        = 100,
+      to           = to
     )
   )
 
   # TODO: Handle errors.
   httr::content(response)
+}
+
+#' Encode a Matrix room ID for use within an URL.
+#'
+#' Room IDs will have a "!" at the start which needs to be encoded as %21
+#' within URLs.
+#'
+#' @param room_id The room ID to be encoded.
+#' @return The encoded room ID.
+#'
+#' @noRd
+encode_room_id <- function(room_id) {
+  sub("^\\!", "%21", room_id)
 }

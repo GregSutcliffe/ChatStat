@@ -4,10 +4,10 @@
 #' @param since        Stop paginating when reaching this time.
 #' @param initial_sync Result of a prior call to [sync()].
 #'
-#' @return A tibble containing event information.
+#' @return An object of class `ChatStat_room`.
 #'
 #' @noRd
-room_history <- function(room_id, since, initial_sync) {
+get_room <- function(room_id, since, initial_sync) {
   # TODO: Add better configuration.
   token    <- Sys.getenv("token")
   timeline <- initial_sync$rooms$join[[room_id]]$timeline
@@ -48,6 +48,13 @@ room_history <- function(room_id, since, initial_sync) {
   }
 
   events |> dplyr::filter(time >= since)
+
+  room(
+    id = room_id,
+    since = since,
+    events = events,
+    next_token = initial_sync$next_batch
+  )
 }
 
 #' Get the room events for a given room ID.
@@ -57,7 +64,7 @@ room_history <- function(room_id, since, initial_sync) {
 #' @param sync     (Optional) Result of a prior call to [sync()] to save
 #'                 duplication.
 #'
-#' @return A tibble containing event information.
+#' @return A tibble containing the rooms.
 #'
 #' @export
 get_rooms <- function(room_ids, since, sync = NULL) {
@@ -75,7 +82,7 @@ get_rooms <- function(room_ids, since, sync = NULL) {
     sync
   }
 
-  tidyr::tibble(room = room_ids) |>
-    dplyr::group_by(room) |>
-    dplyr::mutate(events = purrr::map(room, room_history, since, initial_sync))
+  tidyr::tibble(id = room_ids) |>
+    dplyr::group_by(id) |>
+    dplyr::mutate(room = purrr::map(id, get_room, since, initial_sync))
 }
