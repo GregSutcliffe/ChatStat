@@ -4,12 +4,17 @@
 \alias{get_messages}
 \title{Retrieve messages using the Matrix-Client-Server API.}
 \usage{
-get_messages(room_id, from)
+get_messages(room_id, from, dir = "b", to = NULL)
 }
 \arguments{
 \item{room_id}{The room whose messages will be received.}
 
 \item{from}{The start token within the history.}
+
+\item{dir}{Direction to receive messages in. "b" for backwards in time, "f"
+for forwards in time.}
+
+\item{to}{The end token to stop receiving messages at.}
 }
 \value{
 A list object from the Matrix API.

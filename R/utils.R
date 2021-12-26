@@ -12,7 +12,32 @@ api_url <- function(url, host = NULL, port = NULL) {
   glue::glue("https://{host}{port}{url}")
 }
 
-process_events <- function(events) {
+#' Create a new empty event tibble.
+#' @noRd
+empty_events <- function() {
+  tibble::tibble(
+    room = character(),
+    id = character(),
+    time = lubridate::as_datetime(NULL),
+    type = character(),
+    sender = character(),
+    message_type = character(),
+    body = character(),
+    raw_event = list()
+  )
+}
+
+#' Transform event data from the Matrix API into a tibble.
+#'
+#' @param room_id Room ID of the room the events belong to.
+#' @param events List of events to include.
+#'
+#' @noRd
+process_events <- function(room_id, events) {
+  if (length(events) < 1) {
+    return(NULL)
+  }
+
   tibble::tibble(event = events) |>
     tidyr::hoist(event,
       id           = "event_id",
@@ -22,8 +47,22 @@ process_events <- function(events) {
       message_type = c("content", "msgtype"),
       body         = c("content", "body")
     ) |>
+    tibble::add_column(room = room_id, .before = 1) |>
     tibble::add_column(raw_event = events) |>
     dplyr::select(!event) |>
-    dplyr::mutate(time = lubridate::as_datetime(time / 1000)) |>
-    dplyr::arrange(time)
+    dplyr::mutate(time = lubridate::as_datetime(time / 1000))
+}
+
+#' Normalize the event data.
+#'
+#' This function takes the event data and removes duplicates. Finally, the
+#' events are arranged by room and time.
+#'
+#' @param events A tibble containing the event data.
+#'
+#' @noRd
+normalize_events <- function(events) {
+  events |>
+    dplyr::distinct(room, id, .keep_all = TRUE) |>
+    dplyr::arrange(room, time)
 }
