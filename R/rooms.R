@@ -10,6 +10,8 @@
 #' @return An object of class `ChatStat_rooms` that stores the parameters as
 #'   named list items.
 #'
+#' @seealso [get_rooms()]
+#'
 #' @export
 rooms <- function(id,
                   since = lubridate::now(),
@@ -40,65 +42,74 @@ rooms <- function(id,
   )
 }
 
-#' Get the room events for a given room ID.
+#' Get the room events for one or more Matrix rooms.
 #'
-#' @param room_id      The room to get data for.
+#' @param room_ids     A vector of room IDs to get data for.
 #' @param since        Stop paginating when reaching this time.
-#' @param initial_sync Result of a prior call to [sync()].
+#' @param initial_sync Result of a prior call to [sync()]. This should be an
+#'   initial sync meaning that the `since` parameter was not provided.
 #'
-#' @return An object of class `ChatStat_room`.
+#' @return An object of class `ChatStat_rooms`.
 #'
-#' @noRd
-get_room <- function(room_id, since, initial_sync) {
+#' @export
+get_rooms <- function(room_ids, since, initial_sync) {
   since <- lubridate::as_datetime(since)
 
   # TODO: Add better configuration.
-  token    <- Sys.getenv("token")
-  timeline <- initial_sync$rooms$join[[room_id]]$timeline
-  from     <- timeline$prev_batch
+  token <- Sys.getenv("token")
 
-  events <- process_events(room_id, timeline$events)
-  rlog::log_debug(glue::glue("Initial sync yielded {nrow(events)} events."))
+  events <- empty_events()
 
-  rlog::log_info(
-    glue::glue("Fetching events for room {room_id} since {since}.")
-  )
+  # Iterate through the room IDs and retrieve the rooms separately.
+  for (room_id in room_ids) {
+    rlog::log_info(glue::glue("Processing room {room_id}."))
 
-  while (TRUE) {
-    oldest_time <- events |>
-      dplyr::slice(1) |>
-      dplyr::pull(time)
+    timeline <- initial_sync$rooms$join[[room_id]]$timeline
+    from <- timeline$prev_batch
 
-    if (oldest_time < since) {
-      rlog::log_info("Specified time has been reached. Stopping.")
-      break
+    room_events <- process_events(room_id, timeline$events)
+    rlog::log_debug(glue::glue("Initial sync yielded {nrow(events)} events."))
+
+    # Paginate backwards to retrieve older events that were not included in the
+    # initial sync.
+    while (TRUE) {
+      oldest_time <- room_events |>
+        dplyr::arrange(time) |>
+        dplyr::slice(1) |>
+        dplyr::pull(time)
+
+      if (oldest_time < since) {
+        rlog::log_info("Specified time has been reached. Stopping.")
+        break
+      }
+
+      rlog::log_debug(glue::glue("Oldest message is from {oldest_time}."))
+
+      messages <- get_messages(room_id, from)
+      new_event_count <- length(messages$chunk)
+
+      if (new_event_count <= 0) {
+        rlog::log_info("No more events. Stopping early.")
+        break
+      }
+
+      rlog::log_debug(glue::glue("Received {new_event_count} more events."))
+
+      new_events <- process_events(room_id, messages$chunk)
+      room_events <- room_events |> tibble::add_row(new_events, .before = 0)
+      from <- messages$end
     }
 
-    rlog::log_debug(glue::glue("Oldest message is from {oldest_time}."))
+    room_events <- room_events |>
+      dplyr::filter(time >= since)
 
-    messages        <- get_messages(room_id, from)
-    new_event_count <- length(messages$chunk)
-
-    if (new_event_count <= 0) {
-      rlog::log_info("No more events. Stopping early.")
-      break
-    }
-
-    rlog::log_debug(glue::glue("Received {new_event_count} more events."))
-
-    new_events <- process_events(room_id, messages$chunk)
-    events     <- events |> tibble::add_row(new_events, .before = 0)
-    from       <- messages$end
+    events <- events |> tibble::add_row(room_events)
   }
 
-  events |>
-    dplyr::filter(time >= since) |>
-    normalize_events()
-
   rooms(
-    id = room_id,
+    id = room_ids,
     since = since,
-    events = events,
+    events = normalize_events(events),
     next_token = initial_sync$next_batch
   )
 }
@@ -128,7 +139,7 @@ update_rooms <- function(rooms, sync = NULL) {
   if (is.null(rooms$next_token)) {
     stop(
       "Rooms can't be updated, because it has not been initialized using the ",
-      "API. Use ChatStat::get_room() to get an updatable rooms object."
+      "API. Use ChatStat::get_rooms() to get an updatable rooms object."
     )
   }
 

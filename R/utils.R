@@ -12,6 +12,21 @@ api_url <- function(url, host = NULL, port = NULL) {
   glue::glue("https://{host}{port}{url}")
 }
 
+#' Create a new empty event tibble.
+#' @noRd
+empty_events <- function() {
+  tibble::tibble(
+    room = character(),
+    id = character(),
+    time = lubridate::as_datetime(NULL),
+    type = character(),
+    sender = character(),
+    message_type = character(),
+    body = character(),
+    raw_event = list()
+  )
+}
+
 #' Transform event data from the Matrix API into a tibble.
 #'
 #' @param room_id Room ID of the room the events belong to.
