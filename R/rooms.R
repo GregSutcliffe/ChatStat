@@ -183,6 +183,11 @@ update_rooms <- function(rooms, sync = NULL) {
       )
   }
 
+  # Remove events older than since that may have been added by the calls to the
+  # messages API.
+  events <- events |>
+      dplyr::filter(time >= rooms$since)
+
   rooms(
     id = rooms$id,
     since = rooms$since,
