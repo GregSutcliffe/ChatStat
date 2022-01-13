@@ -4,7 +4,7 @@
 \alias{get_rooms}
 \title{Get the room events for one or more Matrix rooms.}
 \usage{
-get_rooms(room_ids, since, initial_sync)
+get_rooms(room_ids, since, initial_sync = NULL)
 }
 \arguments{
 \item{room_ids}{A vector of room IDs to get data for.}
@@ -12,7 +12,8 @@ get_rooms(room_ids, since, initial_sync)
 \item{since}{Stop paginating when reaching this time.}
 
 \item{initial_sync}{Result of a prior call to \code{\link[=sync]{sync()}}. This should be an
-initial sync meaning that the \code{since} parameter was not provided.}
+initial sync meaning that the \code{since} parameter was not provided. If this
+is not provided, it will be called automatically.}
 }
 \value{
 An object of class \code{ChatStat_rooms}.

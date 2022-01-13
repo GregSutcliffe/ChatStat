@@ -47,17 +47,25 @@ rooms <- function(id,
 #' @param room_ids     A vector of room IDs to get data for.
 #' @param since        Stop paginating when reaching this time.
 #' @param initial_sync Result of a prior call to [sync()]. This should be an
-#'   initial sync meaning that the `since` parameter was not provided.
+#'   initial sync meaning that the `since` parameter was not provided. If this
+#'   is not provided, it will be called automatically.
 #'
 #' @return An object of class `ChatStat_rooms`.
 #'
 #' @export
-get_rooms <- function(room_ids, since, initial_sync) {
+get_rooms <- function(room_ids, since, initial_sync = NULL) {
   since <- lubridate::as_datetime(since)
 
   # TODO: Add better configuration.
   token <- Sys.getenv("token")
 
+  # Perform an initial sync if required.
+  if (is.null(initial_sync)) {
+    rlog::log_info("Performing initial sync.")
+    initial_sync <- sync()
+  }
+
+  # Buffer for all events across rooms.
   events <- empty_events()
 
   # Iterate through the room IDs and retrieve the rooms separately.
