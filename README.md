@@ -35,7 +35,7 @@ R
 Which will set up a new `renv` environment with ChatStat installed and
 ready to use.
 
-## Making raw Matrix API calls
+## Usage
 
 You will need your `access_token` and your homeserver URL, and
 optionally a port if your homeserver is non-standard:
@@ -46,14 +46,27 @@ Sys.setenv('token' = 'syt_foobarbaz',
             'host' = 'matrix.org')
 ```
 
-You can then get a JSON list of events by providing a roomID that you
-access to:
+To retrieve room data initially, use `get_rooms()` like in the following
+example.
 
 ``` r
 library(ChatStat)
-df <- room_history('!layMvdZSboJeKiyTAL:matrix.org', # rmeta:matrix.org
-                   since = '2021-12-01 00:00:00')
-length(df)
+
+room_ids <- c(
+  "!layMvdZSboJeKiyTAL:matrix.org", # #rmeta:matrix.org
+  "!FeFZUTDOtgIlOUoYhq:matrix.org", # #rstats:matrix.org
+  "!zSgZAViSMVQLIqRgOv:matrix.org"  # #rmatrixstats:matrix.org
+)
+
+rooms <- get_rooms(room_ids, since = "2022-01-01")
+```
+
+A rooms object that has been created using `get_rooms()` can be updated
+later using `update_room()` which will add events that happened in the
+mean time.
+
+``` r
+updated_rooms <- update_rooms(rooms)
 ```
 
 See <https://spec.matrix.org/v1.1/client-server-api/> for more details
