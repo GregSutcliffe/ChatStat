@@ -40,6 +40,69 @@ rooms <- function(id,
   )
 }
 
+#' Get the room events for a given room ID.
+#'
+#' @param room_id      The room to get data for.
+#' @param since        Stop paginating when reaching this time.
+#' @param initial_sync Result of a prior call to [sync()].
+#'
+#' @return An object of class `ChatStat_room`.
+#'
+#' @noRd
+get_room <- function(room_id, since, initial_sync) {
+  since <- lubridate::as_datetime(since)
+
+  # TODO: Add better configuration.
+  token    <- Sys.getenv("token")
+  timeline <- initial_sync$rooms$join[[room_id]]$timeline
+  from     <- timeline$prev_batch
+
+  events <- process_events(room_id, timeline$events)
+  rlog::log_debug(glue::glue("Initial sync yielded {nrow(events)} events."))
+
+  rlog::log_info(
+    glue::glue("Fetching events for room {room_id} since {since}.")
+  )
+
+  while (TRUE) {
+    oldest_time <- events |>
+      dplyr::slice(1) |>
+      dplyr::pull(time)
+
+    if (oldest_time < since) {
+      rlog::log_info("Specified time has been reached. Stopping.")
+      break
+    }
+
+    rlog::log_debug(glue::glue("Oldest message is from {oldest_time}."))
+
+    messages        <- get_messages(room_id, from)
+    new_event_count <- length(messages$chunk)
+
+    if (new_event_count <= 0) {
+      rlog::log_info("No more events. Stopping early.")
+      break
+    }
+
+    rlog::log_debug(glue::glue("Received {new_event_count} more events."))
+
+    new_events <- process_events(room_id, messages$chunk)
+    events     <- events |> tibble::add_row(new_events, .before = 0)
+    from       <- messages$end
+  }
+
+  events |>
+    dplyr::filter(time >= since) |>
+    normalize_events()
+
+  rooms(
+    id = room_id,
+    since = since,
+    events = events,
+    next_token = initial_sync$next_batch
+  )
+}
+
 #' Update room state using the Matrix API.
 #'
 #' This function extends the existing state of the rooms with new events from
