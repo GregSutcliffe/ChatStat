@@ -42,6 +42,41 @@ rooms <- function(id,
   )
 }
 
+#' Print information on a rooms object.
+#'
+#' @param x The rooms object to print.
+#'
+#' @export
+print.ChatStat_rooms <- function(x, ...) {
+  room_id_width <- max(nchar(x$id)) + 3
+
+  header <- paste0(
+    format("Room ID", width = room_id_width),
+    "Event count\n"
+  )
+
+  rows <- purrr::map(x$id, function(room_id) {
+    event_count <- x$events |>
+      dplyr::filter(room == room_id) |>
+      dplyr::count() |>
+      dplyr::pull(n)
+
+    paste0(
+      format(room_id, width = room_id_width),
+      event_count,
+      "\n"
+    )
+  })
+
+  cat(
+    "Matrix room state since",
+    format(x$since),
+    "\n\n",
+    header,
+    paste0(rows)
+  )
+}
+
 #' Get the room events for one or more Matrix rooms.
 #'
 #' @param room_ids     A vector of room IDs to get data for.
