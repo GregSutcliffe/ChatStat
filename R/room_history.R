@@ -8,12 +8,14 @@
 #'
 #' @noRd
 get_room <- function(room_id, since, initial_sync) {
+  since <- lubridate::as_datetime(since)
+
   # TODO: Add better configuration.
   token    <- Sys.getenv("token")
   timeline <- initial_sync$rooms$join[[room_id]]$timeline
   from     <- timeline$prev_batch
 
-  events   <- process_events(timeline$events)
+  events <- process_events(room_id, timeline$events)
   rlog::log_debug(glue::glue("Initial sync yielded {nrow(events)} events."))
 
   rlog::log_info(
@@ -42,14 +44,16 @@ get_room <- function(room_id, since, initial_sync) {
 
     rlog::log_debug(glue::glue("Received {new_event_count} more events."))
 
-    new_events <- process_events(messages$chunk)
+    new_events <- process_events(room_id, messages$chunk)
     events     <- events |> tibble::add_row(new_events, .before = 0)
     from       <- messages$end
   }
 
-  events |> dplyr::filter(time >= since)
+  events |>
+    dplyr::filter(time >= since) |>
+    normalize_events()
 
-  room(
+  rooms(
     id = room_id,
     since = since,
     events = events,
