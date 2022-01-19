@@ -2,7 +2,7 @@
 title: "ChatStat Report for `r Sys.Date()`"
 params:
   test: true
-  data: null
+  events: null
 output:
   html_document:
     css: 'style.css'
@@ -20,9 +20,9 @@ knitr::opts_chunk$set(
 
 library(ggplot2)
 
-# We expect a block of room(s) data
+# We expect an event tibble as input.
 
-data <- params$data
+data <- params$events
 
 if (is.null(data)) {
   stop("No data provided!")

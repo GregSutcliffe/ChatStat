@@ -67,27 +67,30 @@ normalize_events <- function(events) {
     dplyr::arrange(room, time)
 }
 
-#' Render a basic HTML report based on a set of room data
+#' Render an HTML report based on room events.
 #'
-#' @param room_data A tibble of messages. Expects to be unpacked from
-#' the nested format in get_rooms
-#' @param output_file The place to write the report. Defaults
-#' to `./chatstat_report.html`
+#' Please note, that the current working directory has to be writable in order
+#' to save the output as well as the intermediate files.
 #'
-#' @return A list object from the Matrix API.
+#' @param events Events to include in the report. This should be from a `rooms`
+#'   object's `events` field.
+#' @param output_file The place to write the report to. Defaults to
+#'   `chatstat_report.html`.
 #'
 #' @export
-render_report <- function(room_data,
-                          output_file = NULL) {
-  rmd <- system.file("rmd","html_report.Rmd", package = 'ChatStat')
+render_report <- function(events, output_file = NULL) {
+  rmd <- system.file("rmd", "html_report.Rmd", package = "ChatStat")
 
   if (is.null(output_file)) {
-    output_file <- paste0(getwd(),'/chatstat_report.html')
+    output_file <- "chatstat_report.html"
   }
 
-  rmarkdown::render(rmd,
-                    params = list(data = room_data),
-                    output_file = output_file)
-
-  browseURL(paste0('file://',getwd(),output_file))
+  rmarkdown::render(
+    rmd,
+    params = list(events = events),
+    output_file = output_file,
+    output_dir = getwd(),
+    intermediates_dir = getwd(),
+    envir = new.env()
+  )
 }
