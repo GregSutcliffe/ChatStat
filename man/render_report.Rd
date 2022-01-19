@@ -2,20 +2,18 @@
 % Please edit documentation in R/utils.R
 \name{render_report}
 \alias{render_report}
-\title{Render a basic HTML report based on a set of room data}
+\title{Render an HTML report based on room events.}
 \usage{
-render_report(room_data, output_file = "./chatstat_report.html")
+render_report(events, output_file = NULL)
 }
 \arguments{
-\item{room_data}{A tibble of messages. Expects to be unpacked from
-the nested format in get_rooms}
+\item{events}{Events to include in the report. This should be from a \code{rooms}
+object's \code{events} field.}
 
-\item{output_file}{The place to write the report. Defaults
-to \code{./chatstat_report.html}}
-}
-\value{
-A list object from the Matrix API.
+\item{output_file}{The place to write the report to. Defaults to
+\code{chatstat_report.html}.}
 }
 \description{
-Render a basic HTML report based on a set of room data
+Please note, that the current working directory has to be writable in order
+to save the output as well as the intermediate files.
 }
