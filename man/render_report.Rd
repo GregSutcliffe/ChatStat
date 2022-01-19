@@ -2,13 +2,12 @@
 % Please edit documentation in R/utils.R
 \name{render_report}
 \alias{render_report}
-\title{Render an HTML report based on room events.}
+\title{Render an HTML report based on a rooms object.}
 \usage{
-render_report(events, output_file = NULL)
+render_report(rooms, output_file = NULL)
 }
 \arguments{
-\item{events}{Events to include in the report. This should be from a \code{rooms}
-object's \code{events} field.}
+\item{rooms}{Rooms object to base the report on. See \code{\link[=rooms]{rooms()}}.}
 
 \item{output_file}{The place to write the report to. Defaults to
 \code{chatstat_report.html}.}
