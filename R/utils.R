@@ -67,18 +67,17 @@ normalize_events <- function(events) {
     dplyr::arrange(room, time)
 }
 
-#' Render an HTML report based on room events.
+#' Render an HTML report based on a rooms object.
 #'
 #' Please note, that the current working directory has to be writable in order
 #' to save the output as well as the intermediate files.
 #'
-#' @param events Events to include in the report. This should be from a `rooms`
-#'   object's `events` field.
+#' @param rooms Rooms object to base the report on. See [rooms()].
 #' @param output_file The place to write the report to. Defaults to
 #'   `chatstat_report.html`.
 #'
 #' @export
-render_report <- function(events, output_file = NULL) {
+render_report <- function(rooms, output_file = NULL) {
   rmd <- system.file("rmd", "html_report.Rmd", package = "ChatStat")
 
   if (is.null(output_file)) {
@@ -87,7 +86,7 @@ render_report <- function(events, output_file = NULL) {
 
   rmarkdown::render(
     rmd,
-    params = list(events = events),
+    params = list(rooms = rooms),
     output_file = output_file,
     output_dir = getwd(),
     intermediates_dir = getwd(),
