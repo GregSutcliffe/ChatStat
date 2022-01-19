@@ -155,7 +155,7 @@ data |>
 
 ```{r}
 words_data <- data |>
-  dplyr::filter(!is.na(body) | type == "m.reaction") |> # chat only
+  dplyr::filter(!is.na(body)) |> # Only include messages with text.
   tidytext::unnest_tokens(
     output = "word", input = body,
     drop = FALSE
