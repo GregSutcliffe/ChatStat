@@ -51,6 +51,7 @@ get_room <- function(room_id, since, initial_sync) {
 
   room(
     id = room_id,
+    alias = get_room_alias(room_id, initial_sync),
     since = since,
     events = events,
     next_token = initial_sync$next_batch

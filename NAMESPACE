@@ -2,5 +2,6 @@
 
 export(get_messages)
 export(get_rooms)
+export(render_report)
 export(sync)
 export(update_room)

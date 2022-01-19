@@ -12,6 +12,7 @@
 #'
 #' @noRd
 room <- function(id,
+                 alias,
                  since = lubridate::now(),
                  events = tibble::tibble(),
                  next_token = NULL) {
@@ -20,6 +21,7 @@ room <- function(id,
   structure(
     list(
       id = id,
+      alias = id,
       since = since,
       events = events,
       next_token = next_token
@@ -90,7 +92,8 @@ update_room <- function(room, sync = NULL) {
   # Append the messages from the new sync.
   events <- events |> tibble::add_row(
     process_events(sync$rooms$join[[room$id]]$timeline$events)
-  )
+  ) |>
+    dplyr::distinct(id, .keep_all = T)
 
   room(
     id = room$id,
