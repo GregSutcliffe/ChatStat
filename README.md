@@ -10,6 +10,10 @@ ChatStat is an R package to get data from online chat platforms, in tidy
 formats. It currently only supports [Matrix](https://matrix.org), but
 more backends are planned.
 
+## Discussion
+
+Come talk in [#rmatrixstats:matrix.org](https://matrix.to/#/#rmatrixstats:matrix.org) to discuss ChatStat or get help using it!
+
 ## Installation
 
 You can install the development version of ChatStat from
