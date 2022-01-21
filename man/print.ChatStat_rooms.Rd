@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{The rooms object to print.}
+
+\item{...}{Ignored, for compatability with print.default}
 }
 \description{
 Print information on a rooms object.

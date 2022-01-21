@@ -45,6 +45,7 @@ rooms <- function(id,
 #' Print information on a rooms object.
 #'
 #' @param x The rooms object to print.
+#' @param ... Ignored, for compatability with print.default
 #'
 #' @export
 print.ChatStat_rooms <- function(x, ...) {

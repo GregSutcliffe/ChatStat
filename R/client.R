@@ -54,8 +54,8 @@ get_messages <- function(room_id, from, dir = "b", to = NULL) {
     query = list(
       access_token = token,
       dir          = dir,
-      from         = from,
       limit        = 100,
+      from         = from,
       to           = to
     )
   )
