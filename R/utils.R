@@ -66,3 +66,28 @@ normalize_events <- function(events) {
     dplyr::distinct(room, id, .keep_all = TRUE) |>
     dplyr::arrange(room, time)
 }
+
+#' Render a basic HTML report based on a set of room data
+#'
+#' @param room_data A tibble of messages. Expects to be unpacked from
+#' the nested format in get_rooms
+#' @param output_file The place to write the report. Defaults
+#' to `./chatstat_report.html`
+#'
+#' @return A list object from the Matrix API.
+#'
+#' @export
+render_report <- function(room_data,
+                          output_file = NULL) {
+  rmd <- system.file("rmd","html_report.Rmd", package = 'ChatStat')
+
+  if (is.null(output_file)) {
+    output_file <- paste0(getwd(),'/chatstat_report.html')
+  }
+
+  rmarkdown::render(rmd,
+                    params = list(data = room_data),
+                    output_file = output_file)
+
+  browseURL(paste0('file://',getwd(),output_file))
+}

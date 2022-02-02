@@ -1,0 +1,140 @@
+---
+title: "ChatStat Report for `r Sys.Date()`"
+params:
+  test: true
+  data: null
+output: 
+  html_document: 
+    css: 'style.css'
+    fig_width: 9
+    fig_height: 4
+    fig_caption: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+
+library(ggplot2)
+
+# We expect a block of room(s) data
+data <- params$data
+if (is.null(data)) {
+  stop("No data provided!")
+}
+
+end <- max(data$time)
+data |>
+    dplyr::filter(time > end - lubridate::days(30)) |>
+    dplyr::filter( !is.na(body) | type == 'm.reaction') |> #chat only
+    dplyr::mutate(day  = lubridate::date(time),
+                  hour = lubridate::hour(time)) -> data
+```
+
+Statistics generated on `r Sys.time()`
+
+This data has a total of **`r length(unique(data$sender))`** different IDs,
+speaking a total of **`r nrow(data)`** messages.
+
+### Daily Activity & trend (last 30 days)
+
+```{r}
+data |>
+  count(day) |>
+  ggplot(aes(x=day,y=n)) +
+  geom_col(fill = 'lightblue') +
+  geom_smooth() +
+    theme_bw() +
+  labs(x='Hour',y="Messages")
+```
+
+### Daily Activity, breakdown by time-of-day
+
+```{r}
+data |>
+  mutate(colour = case_when(
+    hour %in% 0:5 ~ "0-5",
+    hour %in% 6:11 ~ "6-11",
+    hour %in% 12:17 ~ "12-17",
+    TRUE ~ "18-23"
+  )) |>
+  mutate(colour = factor(colour, levels = rev(c('0-5','6-11','12-17','18-23')))) |>
+  count(day,colour) |>
+  add_count(day,wt = n,name = 'total') |>
+  ggplot(aes(x=day,y=n,fill=colour)) +
+  geom_col(position="stack") +
+  geom_text(aes(y=total, label = total, fill = NULL), nudge_y = 30) +
+  scale_fill_manual(name = 'Hour', values = c('blue','green','yellow','red')) +
+  theme_bw() +
+  labs(x='Date',y='Messages')
+```
+
+### Most active times
+
+```{r}
+data |>
+  count(hour) |>
+  mutate(p = n/sum(n)) |>
+  mutate(colour = case_when(
+    hour %in% 0:5 ~ "0-5",
+    hour %in% 6:11 ~ "6-11",
+    hour %in% 12:17 ~ "12-17",
+    TRUE ~ "18-23"
+  )) |>
+  mutate(colour = factor(colour, levels = rev(c('0-5','6-11','12-17','18-23')))) |>
+  ggplot(aes(x=hour,y=p,fill=colour)) +
+  geom_col() +
+  geom_text(aes(y=p, label = scales::percent(p,accuracy = 0.1)), size = 3, vjust = -.5) +
+  scale_fill_manual(name = 'Hour', values = c('blue','green','yellow','red')) +
+  scale_x_continuous(breaks=0:23) +
+  theme_bw() +
+  theme(axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()) +
+  labs(x='Hour',y="")
+```
+
+### Top ten posters (by message count)
+
+Words like "and", "the", "or, and so on have been removed before
+counting.
+
+```{r}
+data |>
+  group_by(sender) |>
+  tidytext::unnest_tokens(output = 'word',
+                          input = body,
+                          drop = FALSE) |>
+  filter(!(word %in% tidytext::stop_words$word)) |>
+  add_count(sender, name = 'words') |>
+  group_by(sender) |>
+  slice_sample(n=1) |>
+  left_join(count(data,sender,name='messages'),by="sender") |>
+  arrange(-messages) |>
+  select(-word) |>
+  head(10) |>
+  mutate(body = stringr::str_replace_all(body, pattern = '\n', ' ')) |>
+  rename(`random message` = body) |>
+  knitr::kable(format='html')
+```
+
+### Most Used Words
+
+```{r}
+data |>
+  dplyr::filter( !is.na(body) | type == 'm.reaction') |> #chat only
+  tidytext::unnest_tokens(output = 'word', input = body,
+                          drop = FALSE) |>
+  filter(!(word %in% tidytext::stop_words$word)) -> d
+
+d |>  
+  count(word,sort=T) |>
+  head(10) |>
+  mutate(last_used_by = map_chr(
+    word, ~{filter(d, word == .x) |> tail(1) |> pull(sender)}
+  )) |>
+  knitr::kable(format='html')  
+```
+
