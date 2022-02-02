@@ -131,6 +131,7 @@ counting.
 
 ```{r}
 data |>
+  dplyr::ungroup() |>
   dplyr::group_by(sender) |>
   tidytext::unnest_tokens(
     output = "word",
@@ -142,11 +143,14 @@ data |>
   dplyr::group_by(sender) |>
   dplyr::slice_sample(n = 1) |>
   dplyr::left_join(
-    dplyr::count(data, sender, name = "messages"),
+    dplyr::count(dplyr::ungroup(data),
+                 sender,
+                 name = "messages"),
     by = "sender"
   ) |>
   dplyr::arrange(-messages) |>
   dplyr::select(-word) |>
+  dplyr::ungroup() |>
   dplyr::slice_head(n = 10) |>
   dplyr::mutate(body = stringr::str_replace_all(body, pattern = "\n", " ")) |>
   dplyr::rename(`random message` = body) |>
