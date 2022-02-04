@@ -26,10 +26,13 @@ RoxygenNote: 7.1.2
 Imports: 
     curl,
     dplyr,
+    ggplot2,
     glue,
     httr,
     lubridate,
     purrr,
     rlog,
+    rmarkdown,
     tibble,
-    tidyr
+    tidyr,
+    tidytext

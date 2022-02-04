@@ -53,6 +53,9 @@ Which will set up a new
 [renv](https://rstudio.github.io/renv/index.html) environment with
 ChatStat installed and ready to use.
 
+Because the report generation depends on a lot of packages, you may find
+this takes a while!
+
 ## Usage
 
 ### Authentication
