@@ -196,7 +196,14 @@ update_rooms <- function(rooms, sync = NULL) {
 
   # Iterate through the rooms and update their state separately.
   for (room_id in rooms$id) {
-    prev_batch_token <- sync$rooms$join[[room_id]]$timeline$prev_batch
+    room_timeline <- sync$rooms$join[[room_id]]$timeline
+    events_from_sync <- room_timeline$events
+    prev_batch_token <- room_timeline$prev_batch
+
+    rlog::log_info(glue::glue("Updating room {room_id}."))
+    rlog::log_debug(
+      glue::glue("Sync contains {length(events_from_sync)} events.")
+    )
 
     # Retrieve messages from the gap between the last sync and the recent sync
     # and append them to the existing events.
@@ -209,10 +216,14 @@ update_rooms <- function(rooms, sync = NULL) {
       )
 
       new_events <- messages$chunk
+      n_new_events <- length(new_events)
 
-      if (length(new_events) < 1) {
+      if (n_new_events < 1) {
+        rlog::log_debug("No more events for room. Stopping.")
         break
       }
+
+      rlog::log_debug(glue::glue("Received {n_new_events} more events."))
 
       events <- events |>
         tibble::add_row(process_events(room_id, messages$chunk))
@@ -222,15 +233,13 @@ update_rooms <- function(rooms, sync = NULL) {
 
     # Append the messages from the new sync.
     events <- events |>
-      tibble::add_row(
-        process_events(room_id, sync$rooms$join[[room_id]]$timeline$events)
-      )
+      tibble::add_row(process_events(room_id, events_from_sync))
   }
 
   # Remove events older than since that may have been added by the calls to the
   # messages API.
   events <- events |>
-      dplyr::filter(time >= rooms$since)
+    dplyr::filter(time >= rooms$since)
 
   rooms(
     id = rooms$id,
