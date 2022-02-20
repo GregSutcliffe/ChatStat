@@ -18,120 +18,45 @@ knitr::opts_chunk$set(
   warning = FALSE
 )
 
-library(ggplot2)
-
 # We expect a rooms object as input.
-
 rooms <- params$rooms
 
 if (is.null(rooms)) {
   stop("No data provided!")
 }
-
-data <- rooms$events
-
-end <- max(data$time)
-
-data <- data |>
-  dplyr::filter(time > end - lubridate::days(30)) |>
-  dplyr::filter(!is.na(body) | type == "m.reaction") |> # chat only
-  dplyr::mutate(
-    day = lubridate::date(time),
-    hour = lubridate::hour(time)
-  )
 ```
 
 Statistics generated on `r Sys.time()`
 
-This data has a total of **`r length(unique(data$sender))`** different IDs,
-speaking a total of **`r nrow(data)`** messages.
+This data has a total of **`r length(unique(rooms$events$sender))`** different
+IDs, speaking a total of **`r nrow(rooms$events)`** messages.
 
-### Daily Activity & trend (last 30 days)
+### Daily Activity & trend
 
 ```{r}
-data |>
-  dplyr::count(day) |>
-  ggplot(aes(x = day, y = n)) +
-  geom_col(fill = "lightblue") +
-  geom_smooth() +
-  theme_bw() +
-  labs(x = "Hour", y = "Messages")
+plot_daily_activity(rooms)
 ```
 
 ### Daily Activity, breakdown by time-of-day
 
 ```{r}
-data |>
-  dplyr::mutate(colour = dplyr::case_when(
-    hour %in% 0:5 ~ "0-5",
-    hour %in% 6:11 ~ "6-11",
-    hour %in% 12:17 ~ "12-17",
-    TRUE ~ "18-23"
-  )) |>
-  dplyr::mutate(colour = factor(
-    colour,
-    levels = rev(c("0-5", "6-11", "12-17", "18-23"))
-  )) |>
-  dplyr::count(day, colour) |>
-  dplyr::add_count(day, wt = n, name = "total") |>
-  ggplot(aes(x = day, y = n, fill = colour)) +
-  geom_col(position = "stack") +
-  geom_text(aes(y = total, label = total, fill = NULL), nudge_y = 30) +
-  scale_fill_manual(
-    name = "Hour",
-    values = c("blue", "green", "yellow", "red")
-  ) +
-  theme_bw() +
-  labs(x = "Date", y = "Messages")
+plot_time_of_day_activity(rooms)
 ```
 
 ### Most active times
 
 ```{r}
-data |>
-  dplyr::count(hour) |>
-  dplyr::mutate(p = n / sum(n)) |>
-  dplyr::mutate(colour = dplyr::case_when(
-    hour %in% 0:5 ~ "0-5",
-    hour %in% 6:11 ~ "6-11",
-    hour %in% 12:17 ~ "12-17",
-    TRUE ~ "18-23"
-  )) |>
-  dplyr::mutate(colour = factor(
-    colour,
-    levels = rev(c("0-5", "6-11", "12-17", "18-23"))
-  )) |>
-  ggplot(aes(x = hour, y = p, fill = colour)) +
-  geom_col() +
-  geom_text(
-    aes(
-      y = p,
-      label = scales::percent(p, accuracy = 0.1)
-    ),
-    size = 3,
-    vjust = -.5
-  ) +
-  scale_fill_manual(
-    name = "Hour",
-    values = c("blue", "green", "yellow", "red")
-  ) +
-  scale_x_continuous(breaks = 0:23) +
-  theme_bw() +
-  theme(
-    axis.ticks.y = element_blank(),
-    axis.text.y = element_blank()
-  ) +
-  labs(x = "Hour", y = "")
+plot_active_times(rooms)
 ```
 
 ### Top ten posters (by message count)
 
-Words like "and", "the", "or, and so on have been removed before
+Words like "and", "the", "or", and so on have been removed before
 counting.
 
 ```{r}
-data |>
-  dplyr::ungroup() |>
+rooms$events |>
+  dplyr::filter(type == "m.room.message" & !is.na(body)) |>
   dplyr::group_by(sender) |>
   tidytext::unnest_tokens(
     output = "word",
@@ -143,9 +68,7 @@ data |>
   dplyr::group_by(sender) |>
   dplyr::slice_sample(n = 1) |>
   dplyr::left_join(
-    dplyr::count(dplyr::ungroup(data),
-                 sender,
-                 name = "messages"),
+    dplyr::count(rooms$events, sender, name = "messages"),
     by = "sender"
   ) |>
   dplyr::arrange(-messages) |>
@@ -160,8 +83,8 @@ data |>
 ### Most Used Words
 
 ```{r}
-words_data <- data |>
-  dplyr::filter(!is.na(body)) |> # Only include messages with text.
+words_data <- rooms$events |>
+  dplyr::filter(type == "m.room.message" & !is.na(body)) |>
   tidytext::unnest_tokens(
     output = "word", input = body,
     drop = FALSE
