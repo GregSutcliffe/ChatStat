@@ -23,7 +23,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
-Imports: 
+Imports:
     curl,
     dplyr,
     ggplot2,
@@ -33,6 +33,7 @@ Imports:
     purrr,
     rlog,
     rmarkdown,
+    scales,
     tibble,
     tidyr,
     tidytext
