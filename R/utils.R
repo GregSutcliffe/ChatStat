@@ -40,17 +40,27 @@ process_events <- function(room_id, events) {
 
   tibble::tibble(event = events) |>
     tidyr::hoist(event,
-      id           = "event_id",
-      time         = "origin_server_ts",
-      type         = "type",
-      sender       = "sender",
+      id = "event_id",
+      time = "origin_server_ts",
+      type = "type",
+      sender = "sender",
       message_type = c("content", "msgtype"),
-      body         = c("content", "body")
+      body = c("content", "body"),
+      .ptype = list(
+        room = character(),
+        id = character(),
+        time = lubridate::as_datetime(NULL),
+        type = character(),
+        sender = character(),
+        message_type = character(),
+        body = character(),
+        raw_event = list()
+      ),
+      .transform = list(time = function(t) lubridate::as_datetime(t / 1000))
     ) |>
     tibble::add_column(room = room_id, .before = 1) |>
     tibble::add_column(raw_event = events) |>
-    dplyr::select(!event) |>
-    dplyr::mutate(time = lubridate::as_datetime(time / 1000))
+    dplyr::select(!event)
 }
 
 #' Normalize the event data.
