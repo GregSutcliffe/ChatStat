@@ -12,6 +12,18 @@ api_url <- function(url, host = NULL, port = NULL) {
   glue::glue("https://{host}{port}{url}")
 }
 
+#' Get the room IDs of all joined rooms.
+#'
+#' @param initial_sync The result of a call to [sync()]. This will be used to
+#'   find the joined rooms.
+#'
+#' @return A character vector of room IDs.
+#'
+#' @export
+all_rooms <- function(initial_sync) {
+  names(initial_sync$rooms$join)
+}
+
 #' Create a new empty event tibble.
 #' @noRd
 empty_events <- function() {
