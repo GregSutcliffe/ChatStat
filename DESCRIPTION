@@ -29,6 +29,7 @@ Imports:
     ggplot2,
     glue,
     httr,
+    igraph,
     lubridate,
     purrr,
     rlog,
@@ -36,4 +37,5 @@ Imports:
     scales,
     tibble,
     tidyr,
-    tidytext
+    tidytext,
+    widyr
