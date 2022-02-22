@@ -2,6 +2,7 @@
 
 S3method(print,ChatStat_rooms)
 export(all_rooms)
+export(get_members)
 export(get_messages)
 export(get_rooms)
 export(plot_active_times)

@@ -3,6 +3,7 @@
 #' @param id Matrix API identifiers of the rooms.
 #' @param since Date and time of the beginning of the included events.
 #' @param events One `data.frame` containing the events for all rooms.
+#' @param members A `data.frame` of current room memberships.
 #' @param next_token Token for the next sync. This should be set from the
 #'   `next_batch` item from the last `sync()` that was used to update the
 #'   rooms.
@@ -16,6 +17,7 @@
 rooms <- function(id,
                   since = lubridate::now(),
                   events = tibble::tibble(),
+                  members = tibble::tibble(),
                   next_token = character()) {
   if (!is.character(id)) {
     stop("'id' should be of type character.")
@@ -25,6 +27,8 @@ rooms <- function(id,
     stop("'since' should be a single timepoint.")
   } else if (!tibble::is_tibble(events)) {
     stop("'events' has to be a tibble; see tibble::is_tibble().")
+  } else if (!tibble::is_tibble(members)) {
+    stop("'members' has to be a tibble; see tibble::is_tibble().")
   } else if (!is.character(next_token)) {
     stop("'next_token' should be of type character.")
   } else if (length(next_token) > 1) {
@@ -36,6 +40,7 @@ rooms <- function(id,
       id = id,
       since = since,
       events = events,
+      members = members,
       next_token = next_token
     ),
     class = "ChatStat_rooms"
@@ -101,8 +106,9 @@ get_rooms <- function(room_ids, since, initial_sync = NULL) {
     initial_sync <- sync()
   }
 
-  # Buffer for all events across rooms.
+  # Buffers for all events and members across rooms.
   events <- empty_events()
+  members <- empty_members()
 
   # Iterate through the room IDs and retrieve the rooms separately.
   for (room_id in room_ids) {
@@ -148,12 +154,18 @@ get_rooms <- function(room_ids, since, initial_sync = NULL) {
       dplyr::filter(time >= since)
 
     events <- events |> tibble::add_row(room_events)
+
+    # Also retrieve the current room members and add them to the buffer.
+    room_members_raw <- get_members(room_id)
+    room_members <- process_members(room_id, room_members_raw$chunk)
+    members <- members |> tibble::add_row(room_members)
   }
 
   rooms(
     id = room_ids,
     since = since,
     events = normalize_events(events),
+    members = members,
     next_token = initial_sync$next_batch
   )
 }
@@ -193,6 +205,10 @@ update_rooms <- function(rooms, sync = NULL) {
 
   events <- rooms$events
   next_batch_token <- rooms$next_token
+
+  # Buffer for all members across rooms. They will be refetched in total for
+  # each update.
+  members <- empty_members()
 
   # Iterate through the rooms and update their state separately.
   for (room_id in rooms$id) {
@@ -234,6 +250,11 @@ update_rooms <- function(rooms, sync = NULL) {
     # Append the messages from the new sync.
     events <- events |>
       tibble::add_row(process_events(room_id, events_from_sync))
+
+    # Also retrieve the current room members and add them to the buffer.
+    room_members_raw <- get_members(room_id)
+    room_members <- process_members(room_id, room_members_raw$chunk)
+    members <- members |> tibble::add_row(room_members)
   }
 
   # Remove events older than since that may have been added by the calls to the
@@ -245,6 +266,7 @@ update_rooms <- function(rooms, sync = NULL) {
     id = rooms$id,
     since = rooms$since,
     events = normalize_events(events),
+    members = members,
     next_token = sync$next_batch
   )
 }

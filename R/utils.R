@@ -75,6 +75,42 @@ process_events <- function(room_id, events) {
     dplyr::select(!event)
 }
 
+#' Create a new empty members tibble.
+#' @noRd
+empty_members <- function() {
+  tibble::tibble(
+    room = character(),
+    user_id = character(),
+    display_name = character(),
+    membership_state = character(),
+    raw_data = list()
+  )
+}
+
+#' Transform a members list from the API into a tibble.
+#'
+#' @param room_id Room ID the members belong to.
+#' @param members The list of membership data.
+#'
+#' @noRd
+process_members <- function(room_id, members) {
+  tibble::tibble(raw_data = members) |>
+    tidyr::hoist(
+      raw_data,
+      user_id = "user_id",
+      display_name = c("content", "displayname"),
+      membership_state = c("content", "membership"),
+      .ptype = list(
+        room = character(),
+        user_id = character(),
+        display_name = character(),
+        membership_state = character(),
+        raw_data = list()
+      )
+    ) |>
+    tibble::add_column(room = room_id, .before = 1)
+}
+
 #' Normalize the event data.
 #'
 #' This function takes the event data and removes duplicates. Finally, the
