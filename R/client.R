@@ -64,6 +64,36 @@ get_messages <- function(room_id, from, dir = "b", to = NULL) {
   httr::content(response)
 }
 
+#' Retrieve a list of memberships for one Matrix room.
+#'
+#' This will fetch all memberships for a given room at the current point in
+#' time. Note that this will include currently joined users as well as all users
+#' that have been in the room historically. They can be differentiated by their
+#' `membership` field.
+#'
+#' @param room_id The room to receive members for.
+#'
+#' @return A list object from the Matrix API.
+#'
+#' @export
+get_members <- function(room_id) {
+  # Documentation:
+  # https://spec.matrix.org/v1.2/client-server-api/#get_matrixclientv3roomsroomidmembers
+
+  # TODO: Better configuration.
+  token <- Sys.getenv("token")
+
+  response <- httr::GET(
+    url = api_url(
+      glue::glue("/_matrix/client/v3/rooms/{encode_room_id(room_id)}/members")
+    ),
+    query = list(access_token = token)
+  )
+
+  # TODO: Handle errors.
+  httr::content(response)
+}
+
 #' Encode a Matrix room ID for use within an URL.
 #'
 #' Room IDs will have a "!" at the start which needs to be encoded as %21
