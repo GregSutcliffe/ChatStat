@@ -4,10 +4,12 @@
 \alias{plot_time_of_day_activity}
 \title{Create a plot showing the activity across the provided rooms by time-of-day.}
 \usage{
-plot_time_of_day_activity(rooms)
+plot_time_of_day_activity(rooms, timespan = lubridate::days(30))
 }
 \arguments{
 \item{rooms}{Rooms object to use. See \code{\link[=rooms]{rooms()}}.}
+
+\item{timespan}{Maximum timespan to show in the plot.}
 }
 \value{
 A \code{ggplot2} object for plotting.
