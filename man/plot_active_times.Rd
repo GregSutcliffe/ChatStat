@@ -4,10 +4,12 @@
 \alias{plot_active_times}
 \title{Create a plot showing the most active hours across the provided rooms.}
 \usage{
-plot_active_times(rooms)
+plot_active_times(rooms, timespan = lubridate::days(30))
 }
 \arguments{
 \item{rooms}{Rooms object to use. See \code{\link[=rooms]{rooms()}}.}
+
+\item{timespan}{Maximum timespan to show in the plot.}
 }
 \value{
 A \code{ggplot2} object for plotting.

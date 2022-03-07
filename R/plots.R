@@ -1,12 +1,21 @@
 #' Create a plot showing the daily activity across the provided rooms.
 #'
 #' @param rooms Rooms object to use. See [rooms()].
+#' @param timespan Maximum timespan to show in the plot.
+#'
 #' @return A `ggplot2` object for plotting.
 #'
 #' @export
-plot_daily_activity <- function(rooms) {
+plot_daily_activity <- function(rooms, timespan = lubridate::days(30)) {
+    end_time <- rooms$events |>
+        dplyr::slice_max(time) |>
+        dplyr::pull(time)
+
     rooms$events |>
-        dplyr::filter(type %in% c("m.room.message", "m.reaction")) |>
+        dplyr::filter(
+            type %in% c("m.room.message", "m.reaction") &
+                time > end_time - timespan
+        ) |>
         dplyr::mutate(
             day = lubridate::date(time),
             hour = lubridate::hour(time)
@@ -22,12 +31,21 @@ plot_daily_activity <- function(rooms) {
 #' Create a plot showing the activity across the provided rooms by time-of-day.
 #'
 #' @param rooms Rooms object to use. See [rooms()].
+#' @param timespan Maximum timespan to show in the plot.
+#'
 #' @return A `ggplot2` object for plotting.
 #'
 #' @export
-plot_time_of_day_activity <- function(rooms) {
+plot_time_of_day_activity <- function(rooms, timespan = lubridate::days(30)) {
+    end_time <- rooms$events |>
+        dplyr::slice_max(time) |>
+        dplyr::pull(time)
+
     rooms$events |>
-        dplyr::filter(type %in% c("m.room.message", "m.reaction")) |>
+        dplyr::filter(
+            type %in% c("m.room.message", "m.reaction") &
+                time > end_time - timespan
+        ) |>
         dplyr::mutate(
             day = lubridate::date(time),
             hour = lubridate::hour(time)
@@ -61,12 +79,21 @@ plot_time_of_day_activity <- function(rooms) {
 #' Create a plot showing the most active hours across the provided rooms.
 #'
 #' @param rooms Rooms object to use. See [rooms()].
+#' @param timespan Maximum timespan to show in the plot.
+#'
 #' @return A `ggplot2` object for plotting.
 #'
 #' @export
-plot_active_times <- function(rooms) {
+plot_active_times <- function(rooms, timespan = lubridate::days(30)) {
+    end_time <- rooms$events |>
+        dplyr::slice_max(time) |>
+        dplyr::pull(time)
+
     rooms$events |>
-        dplyr::filter(type %in% c("m.room.message", "m.reaction")) |>
+        dplyr::filter(
+            type %in% c("m.room.message", "m.reaction") &
+                time > end_time - timespan
+        ) |>
         dplyr::mutate(hour = lubridate::hour(time)) |>
         dplyr::count(hour) |>
         dplyr::mutate(p = n / sum(n)) |>
@@ -97,8 +124,8 @@ plot_active_times <- function(rooms) {
         ggplot2::scale_x_continuous(breaks = 0:23) +
         ggplot2::theme_bw() +
         ggplot2::theme(
-            axis.ticks.y = element_blank(),
-            axis.text.y = element_blank()
+            axis.ticks.y = ggplot2::element_blank(),
+            axis.text.y = ggplot2::element_blank()
         ) +
         ggplot2::labs(x = "Hour", y = "")
 }

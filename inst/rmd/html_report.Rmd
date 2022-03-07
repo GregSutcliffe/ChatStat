@@ -26,7 +26,7 @@ if (is.null(rooms)) {
 }
 ```
 
-Statistics generated on `r Sys.time()`
+Statistics generated on `r Sys.time()` and based on data from the last 30 days.
 
 This data has a total of **`r length(unique(rooms$events$sender))`** different
 IDs, speaking a total of **`r nrow(rooms$events)`** messages.
