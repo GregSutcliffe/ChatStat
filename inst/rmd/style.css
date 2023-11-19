@@ -1,8 +1,37 @@
 table {
-  margin: auto;
   border-top: 1px solid #666;
   border-bottom: 1px solid #666;
 }
 table thead th { border-bottom: 1px solid #ddd; }
-th, td { padding: 5px; }
 thead, tfoot, tr:nth-child(even) { background: #eee; }
+
+#top-ten-posters-by-message-count {
+  max-width: 100%;
+}
+
+table {
+  display: block;
+  overflow-x: auto;
+  width: fit-content;
+  max-width: 100%;
+  /*display: table;*/
+  table-layout: fixed;
+  /*width: 100%;*/
+  border-collapse: collapse;
+  margin-bottom: 14px;
+
+  th {
+    text-align: left !important;
+    padding: 0.5rem;
+    vertical-align: text-top;
+  }
+
+  td {
+    text-align: left !important;
+    padding: 0.5rem;
+    vertical-align: text-top;
+    code {
+      white-space: normal;
+    }
+  }
+}

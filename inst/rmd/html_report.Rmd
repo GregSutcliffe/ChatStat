@@ -77,6 +77,7 @@ rooms$events |>
   dplyr::slice_head(n = 10) |>
   dplyr::mutate(body = stringr::str_replace_all(body, pattern = "\n", " ")) |>
   dplyr::rename(`random message` = body) |>
+  dplyr::mutate(`random message` = stringr::str_trunc(`random message`, 300)) |>
   knitr::kable(format = "html")
 ```
 
