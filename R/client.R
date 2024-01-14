@@ -7,26 +7,27 @@
 #' @export
 sync <- function(since = NULL) {
   # Documentation:
-  # https://spec.matrix.org/v1.1/client-server-api/#get_matrixclientv3sync
+  # https://spec.matrix.org/v1.9/client-server-api/#get_matrixclientv3sync
 
   # TODO we can do this better I think
   token <- Sys.getenv("token")
 
   # TODO use Filtering here
-  # (https://spec.matrix.org/v1.1/client-server-api/#api-endpoints)
-  response <- httr::GET(
-    url   = api_url("/_matrix/client/r0/sync"),
-    query = list(
-      access_token = token,
-      set_presence = "offline", # The user is not really logging in
-      since        = since      # optional
-    )
-  )
-  # TODO check error code properly
-  # print(httr::status_code(resp))
+  # (https://spec.matrix.org/v1.9/client-server-api/#api-endpoints)
+  req <- httr2::request(api_url("/_matrix/client/v3/sync")) |>
+    httr2::req_headers(Authorization = glue::glue("Bearer {token}")) |>
+    httr2::req_url_query(set_presence = "offline", # The user is not really logging in
+                         since        = since) |>  # optional
+    httr2::req_throttle(30 / 60) # 30 requests per 60 seconds
 
+  response <- req |> httr2::req_perform() |> httr2::resp_check_status()
+
+
+  try(httr2::resp_check_content_type(response, "application/json"))
+
+  # TODO check error code properly
   # Return the list
-  httr::content(response)
+  response |> httr2::resp_body_json()
 }
 
 #' Retrieve messages using the Matrix-Client-Server API.
@@ -40,28 +41,35 @@ sync <- function(since = NULL) {
 #' @return A list object from the Matrix API.
 #'
 #' @export
-get_messages <- function(room_id, from, dir = "b", to = NULL) {
+get_messages <- function(room_id,
+                         from,
+                         dir = "b",
+                         to = NULL) {
   # Documentation:
-  # https://spec.matrix.org/v1.1/client-server-api/#get_matrixclientv3roomsroomidmessages
+  # https://spec.matrix.org/v1.9/client-server-api/#get_matrixclientv3roomsroomidmessages
 
   # TODO: Better configuration.
   token <- Sys.getenv("token")
 
-  response <- httr::GET(
-    url = api_url(
-      glue::glue("/_matrix/client/r0/rooms/{encode_room_id(room_id)}/messages")
-    ),
-    query = list(
-      access_token = token,
+  req <- httr2::request(api_url(
+    glue::glue(
+      "/_matrix/client/v3/rooms/{room_id}/messages"
+    )
+  ))  |>
+    httr2::req_headers(Authorization = glue::glue("Bearer {token}")) |>
+    httr2::req_url_query(
       dir          = dir,
       limit        = 100,
       from         = from,
       to           = to
-    )
-  )
+    ) |>
+    httr2::req_throttle(30 / 60) # 30 requests per 60 seconds
+
+  response <- req |> httr2::req_perform() |> httr2::resp_check_status()
+  try(httr2::resp_check_content_type(response, "application/json"))
 
   # TODO: Handle errors.
-  httr::content(response)
+  response |> httr2::resp_body_json()
 }
 
 #' Retrieve a list of memberships for one Matrix room.
@@ -78,20 +86,24 @@ get_messages <- function(room_id, from, dir = "b", to = NULL) {
 #' @export
 get_members <- function(room_id) {
   # Documentation:
-  # https://spec.matrix.org/v1.2/client-server-api/#get_matrixclientv3roomsroomidmembers
+  # https://spec.matrix.org/v1.9/client-server-api/#get_matrixclientv3roomsroomidmembers
 
   # TODO: Better configuration.
   token <- Sys.getenv("token")
 
-  response <- httr::GET(
-    url = api_url(
-      glue::glue("/_matrix/client/v3/rooms/{encode_room_id(room_id)}/members")
-    ),
-    query = list(access_token = token)
-  )
+  req <- httr2::request(api_url(
+    glue::glue(
+      "/_matrix/client/v3/rooms/{room_id}/members"
+    )
+  )) |>
+    httr2::req_headers(Authorization = glue::glue("Bearer {token}")) |>
+    httr2::req_throttle(30 / 60) # 30 requests per 60 seconds
 
   # TODO: Handle errors.
-  httr::content(response)
+  response <- req |> httr2::req_perform() |> httr2::resp_check_status()
+  try(httr2::resp_check_content_type(response, "application/json"))
+
+  response |> httr2::resp_body_json()
 }
 
 #' Encode a Matrix room ID for use within an URL.
